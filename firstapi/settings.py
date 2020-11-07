@@ -40,8 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework.authtoken',
     'app',
+    'app.others',
     'rest_framework',
-    'captcha',
 ]
 
 MIDDLEWARE = [
@@ -108,17 +108,20 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # JsonResponses://docs.djangoproject.com/en/3.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
+DATETIME_FORMAT = "%d-%m-%Y%H:%M:%S"
+
 TIME_ZONE = 'America/Sao_Paulo'
+
+DEFAULT_CHARSET='utf-8'
 
 USE_I18N = True
 
-USE_L10N = True
+USE_L10N = False
 
 USE_TZ = False
 
@@ -128,7 +131,7 @@ USE_TZ = False
 
 STATIC_URL = '/static/'
 
-LOGIN_REDIRECT_URL='/'
+#LOGIN_REDIRECT_URL='/'
 PASSWORD_RESET_TIMEOUT_DAYS=7
 SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
 

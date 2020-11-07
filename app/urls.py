@@ -1,12 +1,13 @@
 from django.urls import path
 from . import views
-from django.contrib import admin
 
 urlpatterns = [
-    path('', views.start_view),
-    path('account/create', views.users_create),
-    path('account/login', views.users_login),
-    path('account/logout', views.users_logout),
-    path('account/update', views.users_update),
-    path('account/delete', views.users_delete),
+    path('users', views.return_dados_users),
+    path('create', views.users_create),
+    path('login', views.users_login),
+    path('logout', views.users_logout),
+    path('update', views.users_update),
+    path('delete', views.users_delete),
+    path('activation/', views.activation_account)
+    
 ]
