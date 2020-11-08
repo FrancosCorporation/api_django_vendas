@@ -153,7 +153,7 @@ def activation_account(request):
         if(verify_fields_none(request, 'active')):
             if(verify_token_exists(request, 'active')):
                 if(actvation_user(request)):
-                    return JsonResponse({}, safe=False)
+                    return JsonResponse({})
                 else:
                     return JsonResponse({}, status=409)
             else:

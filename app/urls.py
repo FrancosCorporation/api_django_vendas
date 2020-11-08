@@ -8,6 +8,6 @@ urlpatterns = [
     path('logout', views.users_logout),
     path('update', views.users_update),
     path('delete', views.users_delete),
-    path('activation/', views.activation_account)
+    path('activation', views.activation_account)
     
 ]
