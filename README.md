@@ -39,6 +39,7 @@ Produtos: M
 - Preço		(Float - 10)
 - Desconto (Float - 10)
 - Category	(ForenKey)
+- fotos (img) podem ser mais de uma
 
 
 
@@ -56,6 +57,7 @@ Pedidos: M
 - ProdutoName (Char - 40)
 - DataPedido	(Date)
 - Status  (Text - 10)
+- usuario () ForenKey - Users
 
 
 

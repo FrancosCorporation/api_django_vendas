@@ -1,11 +1,12 @@
 from rest_framework import serializers
-from .models import Users, Products, Ip
+from .models import Classificacao, Users,Ip
 
 
-class ProductsSerializers(serializers.ModelSerializer):
+class ClassificacaoSerializers(serializers.ModelSerializer):
     class Meta:
-        model = Products
+        model = Classificacao
         fields = '__all__'
+
 
 class IpSerializers(serializers.ModelSerializer):
     class Meta:
@@ -16,4 +17,3 @@ class UsersSerializers(serializers.ModelSerializer):
     class Meta:
         model = Users
         fields = '__all__'
-        #quantidade de itens carregados juntos depth=1

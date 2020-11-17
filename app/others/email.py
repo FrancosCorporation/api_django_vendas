@@ -31,7 +31,7 @@ def send_email(request):
     if(str(domain).__contains__('19')):
          http = 'http://'
     else:
-        http= 'http://www.'
+        http= 'http://'
     
     link = http+ domain+ '/account/activation?token=' + \
         Users.objects.get(email=request.GET.get('email')).token
