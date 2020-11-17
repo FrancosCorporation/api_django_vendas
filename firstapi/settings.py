@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework.authtoken',
     'app',
+    'produto',
+    'pedidos',
     'app.others',
     'rest_framework',
 ]
@@ -85,7 +87,11 @@ DATABASES = {
         'USER': 'dolfim',
         'PASSWORD':'dolfimdolfim',
         'HOST': '',
-        'PORT': '3305'
+        'PORT': '3305',
+        'OPTIONS':{
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'charset':'utf8'
+        }
     }
 }
 
@@ -142,3 +148,4 @@ EMAIL_USE_TLS=config('EMAIL_USE_TLS')
 EMAIL_PORT=config('EMAIL_PORT')
 DEFAULT_FROM_EMAIL=config('EMAIL_HOST_USER')
 RECAPTCHA_PRIVATE_KEY=config('RECAPTCHA_PRIVATE_KEY')
+KEY = config('KEY')
