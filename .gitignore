@@ -1,4 +1,2 @@
-    .env
-    .env_sample_file
-    app/__pycache__/
-    app/migrations/
+.env
+.env_sample_file
