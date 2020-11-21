@@ -43,7 +43,7 @@ def users_create(request):
                     # criando o usuario
                     if(user_create(request)):
                         # enviando o email de ativacao, ainda nao terminado
-                        send_email(request)
+                        #send_email(request)
                         return JsonResponse({})
                     else:
                         return JsonResponse({}, status=400)

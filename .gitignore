@@ -1,2 +1,4 @@
     .env
     .env_sample_file
+    */__pycache__
+    */migrations
