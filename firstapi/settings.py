@@ -140,8 +140,6 @@ USE_TZ = False
 STATIC_URL = '/static/'
 
 #LOGIN_REDIRECT_URL='/'
-PASSWORD_RESET_TIMEOUT_DAYS=7
-SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
 
 EMAIL_HOST=config('EMAIL_HOST')
 EMAIL_HOST_USER=config('EMAIL_HOST_USER')
