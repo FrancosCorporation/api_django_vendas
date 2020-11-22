@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'app',
     'app.others',
     'rest_framework',
+    'djangosecure',
+    'sslserver',
 ]
 
 MIDDLEWARE = [

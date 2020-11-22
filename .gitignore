@@ -1,5 +1,6 @@
 .env
 .env_sample_file
-/app/__pycache__
-/app/others
-/firstapi/__pycache__
+app/__pycache__
+app/others
+firstapi/__pycache__
+app/migrations
