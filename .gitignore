@@ -1,1 +1,9 @@
-    .env
+.env
+*.pyc
+
+/app/__pycache__
+/app/migrations
+/app/others/__pycache__
+/firstapi/__pycache__
+//__pycache__
+
