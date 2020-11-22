@@ -18,7 +18,7 @@ class Users(models.Model):
     password = models.CharField(max_length=128, null=False, blank=False)
     last_login = models.DateTimeField(null=False)
     date_auth = models.DateTimeField(null=False)
-    token = models.TextField(unique=True, max_length=164, null=False)
+    token = models.CharField(unique=True, max_length=164, null=False)
     is_active = models.BooleanField(auto_created=True, default=False)
     activate = models.BooleanField(auto_created=True, default=False)
     permission = models.ForeignKey(

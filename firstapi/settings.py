@@ -9,7 +9,6 @@ JsonResponses://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 JsonResponses://docs.djangoproject.com/en/3.1/ref/settings/
 """
-
 from pathlib import Path
 from decouple import config
 
@@ -44,9 +43,12 @@ INSTALLED_APPS = [
     'pedidos',
     'app.others',
     'rest_framework',
+    'djangosecure',
+    'sslserver',
 ]
 
 MIDDLEWARE = [
+    'djangosecure.middleware.SecurityMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -76,7 +78,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'firstapi.wsgi.application'
 
-
+SECURE_SSL_REDIRECT = True
 # Database
 # JsonResponses://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
