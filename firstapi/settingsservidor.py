@@ -41,10 +41,11 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'app',
     'rest_framework',
-    'captcha',
+    'djangosecure',
 ]
 
 MIDDLEWARE = [
+    'djangosecure.middleware.SecurityMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -74,7 +75,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'firstapi.wsgi.application'
 
-
+SECURE_SSL_REDIRECT = True
 # Database
 # JsonResponses://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
