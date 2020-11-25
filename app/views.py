@@ -1,3 +1,5 @@
+import os
+from django.http.response import HttpResponse
 from app.others.block import verify_ip
 from app.others.fields import verify_fields_none
 from app.others.methods import verify_method
@@ -176,3 +178,10 @@ def change_level_user(request):
             return JsonResponse({}, status=406)
     else:
         return JsonResponse({}, status=405)
+
+
+def file(request):
+    caminho = os.path.abspath('app/97B7DA250E66B1D9363B3E9D704C92C0.txt')
+    file= open(caminho, 'r')
+
+    return HttpResponse(file.read())
