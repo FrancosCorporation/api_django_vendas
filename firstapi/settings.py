@@ -9,7 +9,6 @@ JsonResponses://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 JsonResponses://docs.djangoproject.com/en/3.1/ref/settings/
 """
-
 from pathlib import Path
 from decouple import config
 
@@ -40,13 +39,17 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework.authtoken',
     'app',
+    'produto',
+    'pedidos',
     'app.others',
     'rest_framework',
     'djangosecure',
     'sslserver',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -54,6 +57,32 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+
+SECURE_SSL_REDIRECT = True
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
 
 ROOT_URLCONF = 'firstapi.urls'
@@ -76,7 +105,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'firstapi.wsgi.application'
 
-
 # Database
 # JsonResponses://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
@@ -87,7 +115,11 @@ DATABASES = {
         'USER': 'dolfim',
         'PASSWORD':'dolfimdolfim',
         'HOST': '',
-        'PORT': '3305'
+        'PORT': '3305',
+        'OPTIONS':{
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'charset':'utf8'
+        }
     }
 }
 
@@ -133,9 +165,9 @@ USE_TZ = False
 
 STATIC_URL = '/static/'
 
-#LOGIN_REDIRECT_URL='/'
-PASSWORD_RESET_TIMEOUT_DAYS=7
-SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
+SECURE_SSL_REDIRECT = True
+
+LOGIN_REDIRECT_URL='/account/login'
 
 EMAIL_HOST=config('EMAIL_HOST')
 EMAIL_HOST_USER=config('EMAIL_HOST_USER')
@@ -144,3 +176,4 @@ EMAIL_USE_TLS=config('EMAIL_USE_TLS')
 EMAIL_PORT=config('EMAIL_PORT')
 DEFAULT_FROM_EMAIL=config('EMAIL_HOST_USER')
 RECAPTCHA_PRIVATE_KEY=config('RECAPTCHA_PRIVATE_KEY')
+KEY = config('KEY')
