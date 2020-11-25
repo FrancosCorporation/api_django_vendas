@@ -7,6 +7,7 @@
 
 *__pycache__/
 *.pyc
+*migrations/
 app/migrations
 firstapi/__pycache__
 produto/__pycache__
