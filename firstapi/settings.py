@@ -45,10 +45,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'djangosecure',
     'sslserver',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
-    'djangosecure.middleware.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -56,6 +57,32 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+
+SECURE_SSL_REDIRECT = True
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
 
 ROOT_URLCONF = 'firstapi.urls'
@@ -78,7 +105,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'firstapi.wsgi.application'
 
-SECURE_SSL_REDIRECT = True
 # Database
 # JsonResponses://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
@@ -139,7 +165,9 @@ USE_TZ = False
 
 STATIC_URL = '/static/'
 
-#LOGIN_REDIRECT_URL='/'
+SECURE_SSL_REDIRECT = True
+
+LOGIN_REDIRECT_URL='/account/login'
 
 EMAIL_HOST=config('EMAIL_HOST')
 EMAIL_HOST_USER=config('EMAIL_HOST_USER')

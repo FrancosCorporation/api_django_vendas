@@ -22,7 +22,7 @@ class Users(models.Model):
     is_active = models.BooleanField(auto_created=True, default=False)
     activate = models.BooleanField(auto_created=True, default=False)
     permission = models.ForeignKey(
-        Classificacao, on_delete=models.CASCADE, default=Classificacao.objects.create().id)
+        Classificacao, on_delete=models.CASCADE, default=Classificacao)
     group = models.CharField(max_length=15, default='padrao')
     session = models.CharField(max_length=100, default='')
 
