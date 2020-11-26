@@ -2,14 +2,16 @@ from django.db import models
 # crie seus modelos de tabelas.
 
 
+
 class Classificacao(models.Model):
     id = models.AutoField(primary_key=True)
-    create = models.BooleanField(auto_created=True,default=False)
-    update = models.BooleanField(auto_created=True,default=False)
-    delete = models.BooleanField(auto_created=True,default=False)
+    create = models.BooleanField(auto_created=True, default=False)
+    update = models.BooleanField(auto_created=True, default=False)
+    delete = models.BooleanField(auto_created=True, default=False)
+    superuser= models.BooleanField(auto_created=True, default=False)
 
     def __str__(self):
-        return self.id
+        return self
 
 class Users(models.Model):
     id = models.AutoField(primary_key=True)
@@ -21,14 +23,12 @@ class Users(models.Model):
     token = models.CharField(unique=True, max_length=164, null=False)
     is_active = models.BooleanField(auto_created=True, default=False)
     activate = models.BooleanField(auto_created=True, default=False)
-    permission = models.ForeignKey(
-        Classificacao, on_delete=models.CASCADE, default=Classificacao)
+    permission =  models.ForeignKey(Classificacao, on_delete=models.CASCADE)
     group = models.CharField(max_length=15, default='padrao')
     session = models.CharField(max_length=100, default='')
 
     def __str__(self):
         return self
-        
 
 class Ip(models.Model):
     ip_address = models.GenericIPAddressField(primary_key=True)

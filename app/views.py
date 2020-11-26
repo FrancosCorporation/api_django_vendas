@@ -1,69 +1,26 @@
+from app.others.functions_users import user_get, users_create, users_delete, users_update
 import os
 from django.http.response import HttpResponse
 from app.others.block import verify_ip
 from app.others.fields import verify_fields_none
 from app.others.methods import verify_method
 from .others.token import verify_token_exists
-from .others.users import actvation_user, change_level, get_all_users, get_token_for_email, get_token_for_email, get_user_for_token, get_level_user, get_user_values, verify_loged, verify_login_match, connecting_user, disconect_user, user_create, user_update, user_delete
-from .others.email import send_email, verificador_email_db, validador_email_correct
+from .others.users import actvation_user, change_level_user,get_permission_su, get_token_for_email, get_token_for_email, verify_loged, verify_login_match, connecting_user, disconect_user
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-
 # csrf_exempt significa que o usuario pode acessar, sem isso o usuario nao tem acesso, padrao do django.
 @csrf_exempt
-def return_dados_users(request):
+def user(request):
     # verificando o metodo
     if(verify_method(request, 'GET')):
-        # verificando se o campo esta vazio
-        if(verify_fields_none(request, 'logout')):
-            # verificando se ta logado
-            if(verify_loged(request)):
-                return JsonResponse([' Dados usuario ', get_user_values(request)], safe=False)
-            else:
-                return JsonResponse({}, status=401)
-        else:
-            return JsonResponse({}, status=406)
-    else:
-        return JsonResponse({}, status=405)
-
-@csrf_exempt
-def return_all_users(request):
-    if(verify_method(request, 'GET')):
-        if(verify_fields_none(request, 'logout')):
-            if(verify_loged(request) and (get_level_user(request) >= 2)):
-                return JsonResponse([' Todos usuario ', get_all_users()], safe=False)
-            else:
-                return JsonResponse({}, status=401)
-        else:
-            return JsonResponse({}, status=406)
-    else:
-        return JsonResponse({}, status=405)
-
-# criando um usuario
-@csrf_exempt
-def users_create(request):
-    if(verify_method(request, 'POST')):
-        if(verify_fields_none(request, 'create')):
-            # verificando se existe o email no bd, ele nao pode existir para passar
-            if (not verificador_email_db(request)):
-                # verificando se o email e aceito
-                if(validador_email_correct(request)):
-
-                    # criando o usuario
-                    if(user_create(request)):
-                        # enviando o email de ativacao, ainda nao terminado
-                        #send_email(request)
-                        return JsonResponse({})
-                    else:
-                        return JsonResponse({}, status=400)
-
-                else:
-                    return JsonResponse({}, status=406)
-            else:
-                return JsonResponse({}, status=409)
-        else:
-            return JsonResponse({}, status=406)
+        return user_get(request)
+    elif(verify_method(request, 'POST')):
+        return users_create(request)
+    elif(verify_method(request, 'PUT')):
+        return users_update(request)
+    elif(verify_method(request, 'DELETE')):
+        return users_delete(request)
     else:
         return JsonResponse({}, status=405)
 
@@ -98,47 +55,12 @@ def users_logout(request):
         # verificando se o campo esta vazio
         if(verify_fields_none(request, 'logout')):
             # verificando se existe o token
-            if(verify_token_exists(request, 'normal')): 
+            if(verify_token_exists(request, 'normal')):
                 # verificando se o login esta ativo se estiver ja desconecta
                 if(disconect_user(request)):
                     return JsonResponse({}, safe=False)
                 else:
                     return JsonResponse({}, status=409)
-            else:
-                return JsonResponse({}, status=401)
-        else:
-            return JsonResponse({}, status=406)
-    else:
-        return JsonResponse({}, status=405)
-
-@csrf_exempt
-def users_update(request):
-    if(verify_method(request, 'PUT')):
-        if(verify_fields_none(request, 'update')):
-            if(verify_loged(request)):
-                # modificando o usuario
-                if(user_update(request)):
-                    return JsonResponse({})
-                else:
-                    return JsonResponse({}, status=406)
-            else:
-                return JsonResponse({}, status=401)
-        else:
-            return JsonResponse({}, status=406)
-
-    else:
-        return JsonResponse({}, status=405)
-
-@csrf_exempt
-def users_delete(request):
-    if(verify_method(request, 'DELETE')):
-        if(verify_fields_none(request, 'delete')):
-            if(verify_loged(request)):
-                # deletando o usuario
-                if(user_delete(request)):
-                    return JsonResponse({})
-                else:
-                    return JsonResponse({}, status=400)
             else:
                 return JsonResponse({}, status=401)
         else:
@@ -162,16 +84,15 @@ def activation_account(request):
     else:
         return JsonResponse({}, status=405)
 
-
-def change_level_user(request):
-    if(verify_method(request, 'GET')):
+@csrf_exempt
+def change_level(request):
+    if(verify_method(request, 'PUT')):
         if(verify_fields_none(request, 'change')):
-            if((verify_loged(request)) and (get_level_user(request) == 5)):
-                if(change_level(request)):
-                    return JsonResponse({'Changed': 'Sucessfull'}, safe=False)
+            if((verify_loged(request)) and get_permission_su(request)):
+                if(change_level_user(request)):
+                    return JsonResponse({})
                 else:
-                    return JsonResponse({}, status=409)
-
+                    return JsonResponse({}, status=401)
             else:
                 return JsonResponse({}, status=401)
         else:
@@ -180,8 +101,8 @@ def change_level_user(request):
         return JsonResponse({}, status=405)
 
 
-def file(request):
-    caminho = os.path.abspath('app/97B7DA250E66B1D9363B3E9D704C92C0.txt')
-    file= open(caminho, 'r')
-
+def file(request, value):
+    print(value)
+    caminho = os.path.abspath('app/'+value)
+    file = open(caminho, 'r', encoding='utf-8')
     return HttpResponse(file.read())
