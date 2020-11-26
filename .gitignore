@@ -4,7 +4,7 @@
 ### Python ###
 
 #Foldes
-
+*.txt
 *__pycache__/
 *.pyc
 *migrations/

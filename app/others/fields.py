@@ -1,5 +1,3 @@
-from django.http.response import JsonResponse
-
 
 def verify_fields_none(request, method):
     try:
@@ -7,8 +5,10 @@ def verify_fields_none(request, method):
         password = request.GET.get('password')
         username = request.GET.get('username')
         token = request.GET.get('token')
-        if(request.GET.get('level')!=None):
-            level = int(request.GET.get('level'))
+        create = request.GET.get('create')
+        update = request.GET.get('update')
+        delete = request.GET.get('delete')
+        superuser = request.GET.get('superuser')
         if((method == 'create')):
             if (((email != None) and (email != '')) and ((password != None) and (password != '')) and ((username != None) and (username != ''))):
                 return True
@@ -38,7 +38,7 @@ def verify_fields_none(request, method):
                 return False
 
         elif(method == 'change'):
-            if(((email != None) and (email != '')) and ((token != None) and (token != '')) and ((level >= 0) and (level <= 5))):
+            if(((email != None) and (email != '')) and ((token != None) and (token != ''))):
                 return True
             else:
                 return False

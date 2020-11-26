@@ -1,5 +1,5 @@
 from produto.others.category import get_all_categorys
-from app.others.users import get_level_user, verify_loged
+from app.others.users import get_permission_create, verify_loged
 from django.http.response import JsonResponse
 from produto.others.fields import verify_fields_none
 from app.others.methods import verify_method
@@ -13,10 +13,7 @@ from .others.products import get_all_products, products_create, products_delete
 @csrf_exempt
 def return_all_products(request):
     if(verify_method(request, 'GET')):
-        if(verify_loged(request)):
             return JsonResponse([{' Todos Produtos ': get_all_products()},{' Todas Categorias ': get_all_categorys()}], safe=False)
-        else:
-            return JsonResponse({}, status=401)
     else:
         return JsonResponse({}, status=405)
 
@@ -25,7 +22,7 @@ def return_all_products(request):
 def create_products(request):
     if(verify_method(request, 'POST')):
         if(verify_fields_none(request, 'create')):
-                if(verify_loged(request) and (get_level_user(request) >= 2)):
+                if(verify_loged(request) and get_permission_create(request)):
                     if(products_create(request)):
                         return JsonResponse({})
                     else:

@@ -29,9 +29,9 @@ def send_email(request):
     domain = get_current_site(request).domain
     http=''
     if(str(domain).__contains__('19')):
-         http = 'http://'
+         http = 'https://'
     else:
-        http= 'http://'
+        http= 'https://'
     
     link = http+ domain+ '/account/activation?token=' + \
         Users.objects.get(email=request.GET.get('email')).token
@@ -42,8 +42,9 @@ def send_email(request):
     email = EmailMessage(
         email_subject,
         email_body,
-        'noreplythisemail@gmail.com',
-        [request.GET.get('email')],
+        to=[request.GET.get('email')],
+        from_email=request.GET.get('email'),
+        reply_to=['noreply@gmail.com'],
     )
     email.send(fail_silently=False)
 
