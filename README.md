@@ -15,7 +15,75 @@ Devem ter categorias para os diferenciar alem de preço
 
 
 
+# Modo de instalação:
 
+Executar a instalação dos pacotes:
+
+<div width="auto" height="300px">
+1 -- Install Python Pelo Site : https://www.python.org/downloads/
+
+2 -- install BuildTools     :   pip install buildtools
+
+3 -- install Django   :    pip install django     or  "FORCED"  : python -m pip install --upgrade django --force-reinstall    
+
+4 -- install Git Django : git clone https://github.com/django/django.git
+
+5 --  Change the django clone global :  python -m pip install -e django/
+
+6 -- Remove if in file on django, if error is == true; in final line;
+
+7 -- config the file Settings.py in project:  DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.(Your BD selected)',  <----- Remove () Options   (mysql, oracle, postgresql, sqlite3)
+        'NAME': 'NameBD',
+        'USER':'YourUser',
+        'PASSWORD':'YourPassaword',
+        'HOST':'IP OF MACHINE',
+        'PORT':'Port Acess Libert'
+    }
+}
+  
+8 -- Check your BD and if Up , in the past of project run for Up your aplication  : python manage.py runserver 
+ 
+ 
+ 
+ Projects:
+ 
+ Verify if exist migrate the Models for BD :  python manage.py makemigrations
+ Action on migrate the models for the new BD: python manage.py migrate
+ 
+ 
+ 
+ Utility:
+ 
+ For Debug :  pip install djangorestframework
+ 
+ python -m pip install --upgrade
+ pip install MySQL-python
+ pip install psycopg2
+
+ 
+ Update:
+ 
+ PIP : python -m pip install --upgrade pip 
+
+ Dev Tools: python -m pip install python-dev-tools --user --upgrade
+ 
+ 
+ DownGrade:
+ 
+  Downgrade django : pip install -U Django==2.0.0
+
+ 
+ 
+ I dont know if this:
+ 
+ pip install django-crispy-forms
+</div>
+
+
+
+# Relacionamentos 
 
 Usuario: One (a diferença vai ser o level e o grupo)
 - Username	(Char - 20)
