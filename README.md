@@ -19,7 +19,6 @@ Devem ter categorias para os diferenciar alem de preço
 
 Executar a instalação dos pacotes:
 
-<div width="auto" height="300px">
 1 -- Install Python Pelo Site : https://www.python.org/downloads/
 
 2 -- install BuildTools     :   pip install buildtools
@@ -79,7 +78,6 @@ Executar a instalação dos pacotes:
  I dont know if this:
  
  pip install django-crispy-forms
-</div>
 
 
 
