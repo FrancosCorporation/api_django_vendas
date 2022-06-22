@@ -1,0 +1,8 @@
+{
+    "builds" : [ 
+      { "src" : "/api-django-vendas/manage.py" , "use" : "@ now / python" }   
+    ],
+    "rotas" : [ 
+      { "src" : "/(.*)" , "dest" : "api-django-vendas / manage.py" }   
+    ]
+  }

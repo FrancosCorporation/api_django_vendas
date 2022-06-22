@@ -34,7 +34,7 @@ Executar a instalação dos pacotes:
 
 7 -- config the file Settings.py in project:  DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.(Your BD selected)',  <----- Remove () Options   (mysql, oracle, postgresql, sqlite3)
+        'ENGINE': 'django.db.backends.(Your BD selected)',  <----- Remove (), you have select one option   (mysql, oracle, postgresql, sqlite3)
         'NAME': 'NameBD',
         'USER':'YourUser',
         'PASSWORD':'YourPassaword',
