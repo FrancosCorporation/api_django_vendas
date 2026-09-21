@@ -3,4 +3,4 @@
 app/__pycache__
 app/others
 firstapi/__pycache__
-app/migrations
+app/migrations.env
