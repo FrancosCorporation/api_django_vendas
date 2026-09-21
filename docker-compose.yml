@@ -1,0 +1,35 @@
+services:
+  api:
+    build: .
+    container_name: api-django-vendas
+    restart: unless-stopped
+    ports:
+      - "3213:8000"
+    environment:
+      - DB_NAME=apirest
+      - DB_USER=dolfim
+      - DB_PASSWORD=dolfimdolfim
+      - DB_HOST=db
+      - DB_PORT=3306
+      - EMAIL_HOST=smtp.gmail.com
+      - EMAIL_HOST_USER=exemplo@gmail.com
+      - EMAIL_HOST_PASSWORD=senha-exemplo
+      - EMAIL_USE_TLS=True
+      - EMAIL_PORT=587
+      - RECAPTCHA_PRIVATE_KEY=chave-exemplo
+    depends_on:
+      - db
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+  db:
+    image: mysql:8
+    container_name: api-django-vendas-db
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=apirest
+      - MYSQL_USER=dolfim
+      - MYSQL_PASSWORD=dolfimdolfim
+    volumes:
+      - api_django_vendas_mysql_data:/var/lib/mysql
+volumes:
+  api_django_vendas_mysql_data:

@@ -39,12 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework.authtoken',
     'app',
-    'produto',
-    'pedidos',
     'app.others',
     'rest_framework',
-    'djangosecure',
-    'sslserver',
     'corsheaders',
 ]
 
@@ -108,14 +104,15 @@ WSGI_APPLICATION = 'firstapi.wsgi.application'
 # Database
 # JsonResponses://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
+import os
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'apirest',
-        'USER': 'dolfim',
-        'PASSWORD':'dolfimdolfim',
-        'HOST': '',
-        'PORT': '3305',
+        'NAME': os.environ.get('DB_NAME', 'apirest'),
+        'USER': os.environ.get('DB_USER', 'dolfim'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'dolfimdolfim'),
+        'HOST': os.environ.get('DB_HOST', ''),
+        'PORT': os.environ.get('DB_PORT', '3305'),
         'OPTIONS':{
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset':'utf8'
