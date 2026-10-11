@@ -9,7 +9,7 @@ class Products(models.Model):
     
     
     def __str__(self):
-        return self
+        return self.nameproduct
 
 
 
@@ -25,7 +25,7 @@ class Users(models.Model):
     
     
     def __str__(self):
-        return self
+        return self.email
         
 
 

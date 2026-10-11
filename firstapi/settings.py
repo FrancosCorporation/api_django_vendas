@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 JsonResponses://docs.djangoproject.com/en/3.1/ref/settings/
 """
 from pathlib import Path
-from decouple import config
+import os
+
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,13 +21,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See JsonResponses://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'p9t4=##5jroyswe4d9pln@=fsfu26w#%_uw=j7enl&vo7&t4yi'
+def env_bool(name, default=False):
+    value = os.environ.get(name)
+    return default if value is None else value.strip().lower() in {'1', 'true', 'yes', 'on'}
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '')
+if len(SECRET_KEY) < 50 or SECRET_KEY.lower().startswith(('replace-', 'change-', 'your-')):
+    raise ImproperlyConfigured('DJANGO_SECRET_KEY deve ter pelo menos 50 caracteres aleatórios.')
+
+DEBUG = env_bool('DJANGO_DEBUG', False)
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,api').split(',')
+    if host.strip()
+]
+if not ALLOWED_HOSTS or '*' in ALLOWED_HOSTS:
+    raise ImproperlyConfigured('DJANGO_ALLOWED_HOSTS precisa listar hosts explícitos.')
 
 
 # Application definition
@@ -37,9 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework.authtoken',
     'app',
-    'app.others',
     'rest_framework',
     'corsheaders',
 ]
@@ -56,9 +66,42 @@ MIDDLEWARE = [
 ]
 
 
-SECURE_SSL_REDIRECT = True
+SECURE_SSL_REDIRECT = env_bool('DJANGO_SECURE_SSL_REDIRECT', not DEBUG)
+SECURE_HSTS_SECONDS = 0 if DEBUG else 31_536_000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
+# Browser preload is kept off until the production domain's subdomains are reviewed.
+SECURE_HSTS_PRELOAD = False
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = 'same-origin'
+X_FRAME_OPTIONS = 'DENY'
+SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
 
-CORS_ALLOW_ALL_ORIGINS = True
+if env_bool('DJANGO_TRUST_X_FORWARDED_PROTO', False):
+    # Only enable this when the app cannot be reached except through a trusted proxy.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
+    if origin.strip()
+]
+if '*' in CORS_ALLOWED_ORIGINS:
+    raise ImproperlyConfigured('CORS_ALLOWED_ORIGINS não aceita wildcard.')
+CORS_ALLOW_CREDENTIALS = False
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
+]
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 65_536
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 100
 
 CORS_ALLOW_METHODS = [
     'DELETE',
@@ -104,19 +147,23 @@ WSGI_APPLICATION = 'firstapi.wsgi.application'
 # Database
 # JsonResponses://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-import os
+DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
+if not DB_PASSWORD or DB_PASSWORD.lower().startswith(('replace-', 'change-', 'your-')):
+    raise ImproperlyConfigured('DB_PASSWORD deve ser definida no ambiente.')
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': os.environ.get('DB_NAME', 'apirest'),
-        'USER': os.environ.get('DB_USER', 'dolfim'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'dolfimdolfim'),
-        'HOST': os.environ.get('DB_HOST', ''),
-        'PORT': os.environ.get('DB_PORT', '3305'),
-        'OPTIONS':{
+        'USER': os.environ.get('DB_USER', 'api_user'),
+        'PASSWORD': DB_PASSWORD,
+        'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
+        'PORT': os.environ.get('DB_PORT', '3306'),
+        'CONN_MAX_AGE': 60,
+        'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'charset':'utf8'
-        }
+            'charset': 'utf8mb4',
+        },
     }
 }
 
@@ -152,8 +199,6 @@ DEFAULT_CHARSET='utf-8'
 
 USE_I18N = True
 
-USE_L10N = False
-
 USE_TZ = False
 
 
@@ -162,14 +207,18 @@ USE_TZ = False
 
 STATIC_URL = '/static/'
 
-SECURE_SSL_REDIRECT = True
+LOGIN_REDIRECT_URL = '/account/login'
 
-LOGIN_REDIRECT_URL='/account/login'
-
-EMAIL_HOST=config('EMAIL_HOST')
-EMAIL_HOST_USER=config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD=config('EMAIL_HOST_PASSWORD')
-EMAIL_USE_TLS=config('EMAIL_USE_TLS')
-EMAIL_PORT=config('EMAIL_PORT')
-DEFAULT_FROM_EMAIL=config('EMAIL_HOST_USER')
-RECAPTCHA_PRIVATE_KEY=config('RECAPTCHA_PRIVATE_KEY')
+EMAIL_BACKEND = (
+    'django.core.mail.backends.console.EmailBackend'
+    if DEBUG
+    else 'django.core.mail.backends.smtp.EmailBackend'
+)
+EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', True)
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL') or EMAIL_HOST_USER or 'noreply@example.invalid'
+PUBLIC_BASE_URL = os.environ.get('PUBLIC_BASE_URL', '').strip().rstrip('/')
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

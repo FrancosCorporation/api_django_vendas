@@ -1,0 +1,13 @@
+.git
+.env
+.env.*
+.venv
+venv
+__pycache__
+**/__pycache__
+*.py[cod]
+.pytest_cache
+coverage.xml
+htmlcov
+*.sqlite3
+MELHORIAS.md

@@ -1,61 +1,50 @@
-from app.models import *
+from urllib.parse import urlencode
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
-from validate_email import validate_email
-from django.contrib.sites.shortcuts import get_current_site
+from django.core.validators import validate_email
+from django.urls import reverse
+
+from app.models import Users
+from .request_data import request_data
 
 
 def validador_email_correct(request):
-    if((request.GET.get('email').__contains__('.')) and (request.GET.get('email').__contains__('@')) and (validate_email(request.GET.get('email')))):
-        list = ['com', 'org', 'br']
-        email = request.GET.get('email')
-        new_email = email.split('.')
-        for x in list:
-            if(new_email[1] == x):
-                return True
-    else:
+    email = (request_data(request).get("email") or "").strip()
+    if len(email) > 100:
         return False
+    try:
+        validate_email(email)
+    except ValidationError:
+        return False
+    return True
 
 
 def verificador_email_db(request):
-    try:
-        if(Users.objects.get(email=request.GET.get('email'))):
-            return True
-    except:
-        return False
+    email = (request_data(request).get("email") or "").strip().lower()
+    return Users.objects.filter(email=email).exists()
 
 
-def send_email(request):
-
-    domain = get_current_site(request).domain
-    http=''
-    if(str(domain).__contains__('19')):
-         http = 'http://'
-    else:
-        http= 'http://www.'
-    
-    link = http+ domain+ '/account/activation?token=' + \
-        Users.objects.get(email=request.GET.get('email')).token
-    email_subject = 'Ativação de Conta !!'
-    email_body = 'Hey ' + \
-        request.GET.get(
-            'username')+' , Não responda esse email, este é um link de validação automatica !!\n'+link
-    email = EmailMessage(
-        email_subject,
-        email_body,
-        'noreplythisemail@gmail.com',
-        [request.GET.get('email')],
+def send_email(email, username, token, request):
+    path = reverse("account-activation")
+    base_url = settings.PUBLIC_BASE_URL.rstrip("/")
+    if not base_url:
+        base_url = request.build_absolute_uri("/").rstrip("/")
+    query = urlencode({"token": token})
+    activation_url = f"{base_url}{path}?{query}"
+    message = EmailMessage(
+        subject="Ativação de conta",
+        body=(
+            f"Olá, {username}! Use o link abaixo para ativar sua conta. "
+            "O link expira em 24 horas e pode ser usado uma única vez.\n\n"
+            f"{activation_url}"
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[email],
     )
-    email.send(fail_silently=False)
+    message.send(fail_silently=False)
 
 
 def verify_email_existy(request):
-    email = request.GET.get('email')
-    # verificando se o email existe no banco
-    try:
-        # se o email existir ele retorna True
-        if(Users.objects.get(email=email)):
-            return True
-
-    # se o email nao existir
-    except:
-        return False
+    return verificador_email_db(request)

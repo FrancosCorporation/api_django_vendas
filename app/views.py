@@ -1,164 +1,120 @@
-from app.others.block import verify_ip
-from app.others.fields import verify_fields_none
-from app.others.methods import verify_method
-from .others.token import verify_token_exists
-from .others.users import actvation_user, get_user_for_email, return_user_values, verify_loged, verify_login_match, connecting_user, disconect_user, user_create, user_update, user_delete
-from .others.email import send_email, verificador_email_db, validador_email_correct
-from django.http import JsonResponse
+import logging
+
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
+from .others.block import verify_ip
+from .others.email import send_email, validador_email_correct, verificador_email_db
+from .others.fields import verify_fields_none
+from .others.methods import verify_method
+from .others.token import verify_token_exists
+from .others.users import (
+    actvation_user,
+    connecting_user,
+    disconect_user,
+    get_user_for_email,
+    return_user_values,
+    user_create,
+    user_delete,
+    user_update,
+    verify_loged,
+    verify_login_match,
+)
 
-# csrf_exempt significa que o usuario pode acessar, sem isso o usuario nao tem acesso, padrao do django.
+
+logger = logging.getLogger(__name__)
+
+# These JSON endpoints authenticate protected requests with an explicit Bearer
+# header and never use Django's session cookie. CSRF exemption is therefore
+# limited to this token-only API; do not add cookie authentication here.
 @csrf_exempt
 def return_dados_users(request):
-    # verificando o metodo
-    if(verify_method(request, 'GET')):
-        # verificando se o campo esta vazio
-        if(verify_fields_none(request, 'logout')):
-            # verificando se existe o token
-            if(verify_token_exists(request, 'normal')):
-                # verificando se ta logado
-                if(verify_loged(request)):
-                    return JsonResponse([' Dados usuario ', return_user_values(request)], safe=False)
-                else:
-                    return JsonResponse({}, status=401)
-            else:
-                return JsonResponse({}, status=401)
-        else:
-            return JsonResponse({}, status=406)
-    else:
+    if not verify_method(request, "GET"):
         return JsonResponse({}, status=405)
+    if not verify_loged(request):
+        return JsonResponse({}, status=401)
+    return JsonResponse({"user": return_user_values(request)})
 
 
-# criando um usuario
 @csrf_exempt
 def users_create(request):
-    if(verify_method(request, 'POST')):
-        if(verify_fields_none(request, 'create')):
-            # verificando se existe o email no bd, ele nao pode existir para passar
-            if (not verificador_email_db(request)):
-                # verificando se o email e aceito
-                if(validador_email_correct(request)):
-
-                    # criando o usuario
-                    if(user_create(request)):
-                        # enviando o email de ativacao, ainda nao terminado
-                        #send_email(request)
-                        return JsonResponse({})
-                    else:
-                        return JsonResponse({}, status=400)
-
-                else:
-                    return JsonResponse({}, status=406)
-            else:
-                return JsonResponse({}, status=409)
-        else:
-            return JsonResponse({}, status=406)
-    else:
+    if not verify_method(request, "POST"):
         return JsonResponse({}, status=405)
+    if not verify_fields_none(request, "create"):
+        return JsonResponse({"error": "Informe username, email e password no corpo."}, status=400)
+    if not validador_email_correct(request):
+        return JsonResponse({"error": "E-mail inválido."}, status=400)
+    if verificador_email_db(request):
+        return JsonResponse({"error": "E-mail já cadastrado."}, status=409)
+    if not user_create(request):
+        return JsonResponse({"error": "Não foi possível criar a conta."}, status=400)
+
+    user = get_user_for_email(request)
+    try:
+        send_email(user.email, user.username, user.token, request)
+    except Exception:
+        logger.exception("Não foi possível enviar o e-mail de ativação")
+        user.delete()
+        return JsonResponse({"error": "Não foi possível enviar o e-mail de ativação."}, status=503)
+    return JsonResponse({"message": "Confira seu e-mail para ativar a conta."}, status=201)
 
 
 @csrf_exempt
 def users_login(request):
-    if(verify_method(request, 'POST')):
-        # metodo ainda nao completo, vai verificar o ip e travar apartir de um certo numero de requisicoes
-        if(verify_ip(request, 2)):
-            # verificando se os campos estao vazios
-            if (verify_fields_none(request, 'login')):
-                # verificando se o login e valido
-                if(verify_login_match(request)):
-                    # verificando se o usuario esta logado
-                    if(connecting_user(request)):
-                        # caso esteja deslogado ele poderá logar
-                        return JsonResponse({'token': get_user_for_email(request).token}, safe=False)
-                    else:
-                        return JsonResponse({}, status=409)
-                else:
-                    return JsonResponse({}, status=401)
-            else:
-                return JsonResponse({}, status=406)
-        else:
-            return JsonResponse({}, status=423)
-
-    else:
+    if not verify_method(request, "POST"):
         return JsonResponse({}, status=405)
+    if not verify_ip(request, 2):
+        return JsonResponse({"error": "Muitas tentativas. Aguarde antes de tentar novamente."}, status=429)
+    if not verify_fields_none(request, "login"):
+        return JsonResponse({"error": "Informe email e password no corpo."}, status=400)
+    if not verify_login_match(request):
+        return JsonResponse({}, status=401)
+    if not connecting_user(request):
+        return JsonResponse({"error": "Ative sua conta antes de entrar."}, status=403)
+
+    user = get_user_for_email(request)
+    return JsonResponse({"token_type": "Bearer", "access_token": user.token, "expires_in": 3600})
 
 
 @csrf_exempt
 def users_logout(request):
-    if(verify_method(request, 'POST')):
-        # verificando se o campo esta vazio
-        if(verify_fields_none(request, 'logout')):
-            # verificando se existe o token
-            if(verify_token_exists(request, 'normal')):
-                # verificando se o login esta ativo se estiver ja desconecta
-                if(disconect_user(request)):
-                    return JsonResponse({}, safe=False)
-                else:
-                    return JsonResponse({}, status=409)
-            else:
-                return JsonResponse({}, status=401)
-        else:
-            return JsonResponse({}, status=406)
-    else:
+    if not verify_method(request, "POST"):
         return JsonResponse({}, status=405)
+    if not verify_fields_none(request, "logout") or not verify_token_exists(request, "normal"):
+        return JsonResponse({}, status=401)
+    if not disconect_user(request):
+        return JsonResponse({}, status=401)
+    return JsonResponse({"message": "Sessão encerrada."})
 
 
 @csrf_exempt
 def users_update(request):
-    if(verify_method(request, 'PUT')):
-        if(verify_fields_none(request, 'update')):
-            if(verify_token_exists(request, 'normal')):
-                if(verify_loged(request)):
-                    # modificando o usuario
-                    if(user_update(request)):
-                        return JsonResponse({})
-                    else:
-                        return JsonResponse({}, status=406)
-                else:
-                    return JsonResponse({}, status=401)
-            else:
-                return JsonResponse({}, status=401)
-        else:
-            return JsonResponse({}, status=406)
-
-    else:
+    if not verify_method(request, "PUT"):
         return JsonResponse({}, status=405)
+    if not verify_fields_none(request, "update") or not verify_loged(request):
+        return JsonResponse({"error": "Token inválido ou campos incompletos."}, status=401)
+    if not user_update(request):
+        return JsonResponse({"error": "Senha atual ou dados de atualização inválidos."}, status=400)
+    return JsonResponse({"message": "Conta atualizada. Se a senha mudou, entre novamente."})
 
 
 @csrf_exempt
 def users_delete(request):
-    if(verify_method(request, 'DELETE')):
-        if(verify_fields_none(request, 'delete')):
-            if(verify_token_exists(request, 'normal')):
-                if(verify_loged(request)):
-                    # deletando o usuario
-                    if(user_delete(request)):
-                        return JsonResponse({})
-                    else:
-                        return JsonResponse({}, status=400)
-                else:
-                    return JsonResponse({}, status=401)
-            else:
-                return JsonResponse({}, status=401)
-        else:
-            return JsonResponse({}, status=406)
-    else:
+    if not verify_method(request, "DELETE"):
         return JsonResponse({}, status=405)
+    if not verify_fields_none(request, "delete") or not verify_loged(request):
+        return JsonResponse({}, status=401)
+    if not user_delete(request):
+        return JsonResponse({}, status=401)
+    return HttpResponse(status=204)
 
 
 @csrf_exempt
 def activation_account(request):
-    if(verify_method(request, 'GET')):
-        if(verify_fields_none(request, 'active')):
-            if(verify_token_exists(request, 'active')):
-                if(actvation_user(request)):
-                    return JsonResponse({})
-                else:
-                    return JsonResponse({}, status=409)
-            else:
-                return JsonResponse({}, status=401)
-        else:
-            return JsonResponse({}, status=406)
-    else:
+    if not verify_method(request, "GET"):
         return JsonResponse({}, status=405)
+    if not verify_fields_none(request, "active") or not verify_token_exists(request, "active"):
+        return JsonResponse({"error": "Link de ativação inválido ou expirado."}, status=400)
+    if not actvation_user(request):
+        return JsonResponse({"error": "Não foi possível ativar esta conta."}, status=409)
+    return JsonResponse({"message": "Conta ativada. Você já pode entrar."})

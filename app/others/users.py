@@ -1,148 +1,159 @@
-from app.others.block import add_ip_blacklist
-from app.serializers import UsersSerializers
-from app.others.token import generetion_token
-from ..models import *
-from .password import *
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.db import IntegrityError
 from django.utils.timezone import now
+
+from ..models import Users
+from .password import check_password, make_password
+from .request_data import request_data
+from .token import get_access_user, get_activation_user, generetion_token
+from .block import add_ip_blacklist, reset_ip_blacklist
 
 
 def user_create(request):
+    data = request_data(request)
+    email = (data.get("email") or "").strip().lower()
+    username = (data.get("username") or "").strip()
+    password = data.get("password") or ""
+
     try:
-        data = {'username': request.GET.get('username'), 'email': request.GET.get('email'), 'password': make_password(request.GET.get('password')),
-                'last_login': now(), 'date_auth': now(), 'token': generetion_token()}
-        serializede = UsersSerializers(data=data)
-        if(serializede.is_valid()):
-            serializede.save()
-            return True
-        else:
+        validate_email(email)
+        if not username or len(username) > 100:
             return False
-    except:
+
+        created_at = now()
+        user = Users(
+            email=email,
+            username=username,
+            password="",
+            last_login=created_at,
+            date_auth=created_at,
+            token=generetion_token(),
+        )
+        validate_password(password, user)
+        user.password = make_password(password)
+        user.full_clean()
+        user.save(force_insert=True)
+        return True
+    except (ValidationError, IntegrityError):
         return False
 
 
 def user_delete(request):
-    try:
-        user = Users.objects.get(token=request.GET.get('token'))
-        user.delete()
-        return True
-    except:
+    user = get_access_user(request)
+    if user is None:
         return False
+    user.delete()
+    return True
 
 
 def user_update(request):
-    email = request.GET.get('email')
-    username = request.GET.get('username')
-    password = request.GET.get('password')
-    token = request.GET.get('token')
-    user = Users.objects.get(token=token)
-    # trazendo o objeto
-    # verificando se o email e igual
-    if(user.email == email and check_password(password, user.password) and user.username == username):
+    user = get_access_user(request)
+    if user is None:
         return False
 
-    elif(user.email == email and check_password(password, user.password)):
-        user.username = username
-        data = {'username': user.username, 'email': user.email, 'password': user.password, 'last_login': user.last_login,
-                'date_auth': user.date_auth, 'token': user.token}
-        serializers = UsersSerializers(user, data=data)
-        if(serializers.is_valid()):
-            serializers.save()
-            return True
-        else:
-            return False
+    data = request_data(request)
+    if not check_password(data.get("current_password") or "", user.password):
+        return False
 
-    elif(user.email == email and check_password(password, user.password) == False):
-        user.email = email
-        user.username = username
-        data = {'username': user.username, 'email': user.email, 'password': make_password(password), 'last_login': user.last_login,
-                'date_auth': user.date_auth, 'token': user.token}
-        serializers = UsersSerializers(user, data=data)
-        if(serializers.is_valid()):
-            serializers.save()
-            return True
-        else:
+    changed_fields = []
+    username = data.get("username")
+    if username is not None:
+        if not isinstance(username, str):
             return False
+        username = username.strip()
+        if not username or len(username) > 100:
+            return False
+        user.username = username
+        changed_fields.append("username")
+
+    new_password = data.get("new_password")
+    if new_password is not None and not isinstance(new_password, str):
+        return False
+    if new_password:
+        try:
+            validate_password(new_password, user)
+        except ValidationError:
+            return False
+        user.password = make_password(new_password)
+        user.is_active = False
+        user.token = generetion_token()
+        changed_fields.extend(("password", "is_active", "token"))
+
+    if not changed_fields:
+        return False
+    user.save(update_fields=changed_fields)
+    return True
 
 
 def verify_login_match(request):
-    email = request.GET.get('email')
-    user = Users.objects.get(email=email)
-    password = request.GET.get('password')
-    if((user.email == email) and (check_password(password, user.password))):
+    data = request_data(request)
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
+    user = Users.objects.filter(email=email).first()
+
+    if user is not None and check_password(password, user.password):
+        reset_ip_blacklist(request)
         return True
-    else:
-        add_ip_blacklist(request)
-        return False
+
+    add_ip_blacklist(request)
+    return False
 
 
 def connecting_user(request):
-    email = request.GET.get('email')
-    user = Users.objects.get(email=email)
-    if(user.is_active is False and user.activate == True):
-        user.is_active = True
-        user.last_login = now()
-        user.save()
-        return True
-    else:
+    data = request_data(request)
+    email = (data.get("email") or "").strip().lower()
+    user = Users.objects.filter(email=email).first()
+    if user is None or not user.activate:
         return False
 
-
-def get_user_for_token(request):
-    return Users.objects.get(token=request.GET.get('token'))
+    user.is_active = True
+    user.last_login = now()
+    user.token = generetion_token()
+    user.save(update_fields=["is_active", "last_login", "token"])
+    return True
 
 
 def get_user_for_email(request):
-    try:
-        if(Users.objects.get(email=request.GET.get('email'))):
-            return Users.objects.get(email=request.GET.get('email'))
-    except:
-        return None
+    email = (request_data(request).get("email") or "").strip().lower()
+    return Users.objects.filter(email=email).first()
+
+
+def get_user_for_token(request):
+    return get_access_user(request)
 
 
 def disconect_user(request):
-    user = Users.objects.get(token=request.GET.get('token'))
-    if(user.is_active == True and user.activate == True):
-        user.is_active = False
-        user.save()
-        return True
-    else:
+    user = get_access_user(request)
+    if user is None:
         return False
+    user.is_active = False
+    user.token = generetion_token()
+    user.save(update_fields=["is_active", "token"])
+    return True
 
 
 def return_user_values(request):
-    user = Users.objects.get(token=request.GET.get('token'))
-    return {'username': user.username, 'email': user.email, 'token': user.token, 'date_last_login': user.last_login}
+    user = get_access_user(request)
+    if user is None:
+        return None
+    return {
+        "username": user.username,
+        "email": user.email,
+        "date_last_login": user.last_login,
+    }
 
 
 def actvation_user(request):
-    new_list = request.META['QUERY_STRING'].split('=')
-    token = new_list[1].replace('/', '')
-    user = Users.objects.get(token=token)
-    if user.activate is False:
-        data = {'username': user.username, 'email': user.email, 'password': user.password, 'last_login': user.last_login,
-                'date_auth': user.date_auth, 'token': user.token, 'activate': True}
-        serializers = UsersSerializers(user, data=data)
-        if(serializers.is_valid()):
-            serializers.save()
-            return True
-        else:
-            return False
-
-    else:
+    user = get_activation_user(request.GET.get("token"))
+    if user is None:
         return False
+    user.activate = True
+    user.token = generetion_token()
+    user.save(update_fields=["activate", "token"])
+    return True
 
 
 def verify_loged(request):
-    user = Users.objects.get(token=request.GET.get('token'))
-    duration = 1  # minutos
-    new_time = now() - user.last_login
-    print((duration/60), (new_time.seconds/3600))
-    if((user.activate == True) and (user.is_active == True) and ((new_time.seconds/3600) <= (duration/60))):
-        return True
-    else:
-        data = {'username': user.username, 'email': user.email, 'password': user.password, 'last_login': user.last_login,
-                'date_auth': user.date_auth, 'token': user.token, 'is_active': False}
-        serializers = UsersSerializers(user, data=data)
-        if(serializers.is_valid()):
-            serializers.save()
-        return False
+    return get_access_user(request) is not None
